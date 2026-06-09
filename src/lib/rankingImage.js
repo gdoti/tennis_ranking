@@ -1,5 +1,5 @@
 // 順位表を Canvas に描画して PNG dataURL を返す
-export function renderRankingImage(standings, totalMatches, circleName = "TENNIS CIRCLE") {
+export function renderRankingImage(standings, totalMatches, circleName = "TENNIS CIRCLE", outputDate = "") {
   const dpr = 2;
   const W = 820;
   const padX = 36;
@@ -41,8 +41,9 @@ export function renderRankingImage(standings, totalMatches, circleName = "TENNIS
   ctx.font = "600 15px ui-monospace, monospace";
   ctx.fillText("DOUBLES RANKING", padX, 96);
 
-  const now = new Date();
-  const dateStr = `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, "0")}.${String(now.getDate()).padStart(2, "0")}`;
+  const dateStr = outputDate
+    ? outputDate.replace(/-/g, ".")
+    : (() => { const d = new Date(); return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,"0")}.${String(d.getDate()).padStart(2,"0")}`; })();
   ctx.fillStyle = "#a7f3d0";
   ctx.font = "500 15px ui-monospace, monospace";
   ctx.textAlign = "right";
@@ -137,7 +138,7 @@ export function renderRankingImage(standings, totalMatches, circleName = "TENNIS
 }
 
 // 全試合結果を Canvas に描画して PNG dataURL を返す
-export function renderMatchesImage(matches, nameOf, circleName = "TENNIS CIRCLE") {
+export function renderMatchesImage(matches, nameOf, circleName = "TENNIS CIRCLE", outputDate = "") {
   const dpr = 2;
   const W = 820;
   const padX = 36;
@@ -178,8 +179,9 @@ export function renderMatchesImage(matches, nameOf, circleName = "TENNIS CIRCLE"
   ctx.font = "600 15px ui-monospace, monospace";
   ctx.fillText("ALL MATCH RESULTS", padX, 88);
 
-  const now = new Date();
-  const dateStr = `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, "0")}.${String(now.getDate()).padStart(2, "0")}`;
+  const dateStr = outputDate
+    ? outputDate.replace(/-/g, ".")
+    : (() => { const d = new Date(); return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,"0")}.${String(d.getDate()).padStart(2,"0")}`; })();
   ctx.fillStyle = "#a7f3d0";
   ctx.font = "500 15px ui-monospace, monospace";
   ctx.textAlign = "right";

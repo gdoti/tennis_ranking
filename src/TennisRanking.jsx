@@ -17,6 +17,14 @@ export default function TennisRanking() {
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState("");
 
+  const todayStr = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  };
+  const [outputDate, setOutputDate] = useState(
+    () => loadState()?.outputDate ?? todayStr()
+  );
+
   const [tab, setTab] = useState("rank");
   const [newName, setNewName] = useState("");
   const [form, setForm] = useState({ a1: "", a2: "", b1: "", b2: "", sa: 0, sb: 0 });
@@ -39,8 +47,8 @@ export default function TennisRanking() {
 
   // 変更があるたびに localStorage へ保存（次回アクセス時に復元される）
   useEffect(() => {
-    saveState({ players, matches, circleName });
-  }, [players, matches, circleName]);
+    saveState({ players, matches, circleName, outputDate });
+  }, [players, matches, circleName, outputDate]);
   const nameOf = (id) => players.find((p) => p.id === id)?.name ?? "?";
 
   const addPlayer = () => {
@@ -95,7 +103,7 @@ export default function TennisRanking() {
 
   const exportImage = () => {
     if (standings.length === 0) return;
-    setImgUrl(renderRankingImage(standings, matches.length, circleName));
+    setImgUrl(renderRankingImage(standings, matches.length, circleName, outputDate));
   };
 
   const downloadImage = () => {
@@ -108,7 +116,7 @@ export default function TennisRanking() {
 
   const exportMatchesImage = () => {
     if (matches.length === 0) return;
-    setMatchImgUrl(renderMatchesImage(matches, nameOf, circleName));
+    setMatchImgUrl(renderMatchesImage(matches, nameOf, circleName, outputDate));
   };
 
   const downloadMatchesImage = () => {
@@ -222,9 +230,18 @@ export default function TennisRanking() {
             )}
           </div>
         </div>
-        <p className="text-emerald-300/70 text-[11px] mb-5 ml-5 tracking-widest uppercase font-mono">
-          doubles &middot; score &amp; ranking
-        </p>
+        <div className="flex items-center gap-2 mb-5 ml-5">
+          <p className="text-emerald-300/70 text-[11px] tracking-widest uppercase font-mono">
+            doubles &middot; score &amp; ranking
+          </p>
+          <span className="text-emerald-600/60 text-[11px]">|</span>
+          <input
+            type="date"
+            value={outputDate}
+            onChange={(e) => setOutputDate(e.target.value || todayStr())}
+            className="text-[11px] font-mono text-emerald-300/70 bg-transparent border-b border-emerald-600/50 outline-none focus:border-lime-400 focus:text-lime-400 transition-colors cursor-pointer"
+          />
+        </div>
 
         {/* タブ */}
         <div className="flex gap-1 mb-5 bg-emerald-900/80 p-1 rounded-2xl border border-emerald-700/60">
