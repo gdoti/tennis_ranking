@@ -46,9 +46,8 @@ export function computeStandings(players, matches) {
     })
     .filter((s) => s.played > 0)
     .sort((a, b) => {
-      if (b.win !== a.win) return b.win - a.win;
-      if (b.gameRate !== a.gameRate) return b.gameRate - a.gameRate;
       if (b.winRate !== a.winRate) return b.winRate - a.winRate;
+      if (b.gameRate !== a.gameRate) return b.gameRate - a.gameRate;
       return a.name.localeCompare(b.name, "ja");
     });
 }
