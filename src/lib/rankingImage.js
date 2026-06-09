@@ -51,7 +51,7 @@ export function renderRankingImage(standings, totalMatches, circleName = "TENNIS
   ctx.textAlign = "left";
 
   ctx.fillStyle = "#34d399";
-  ctx.font = "500 14px sans-serif";
+  ctx.font = "500 14px system-ui, -apple-system, sans-serif";
   ctx.fillText(`全${totalMatches}試合 ・ ${standings.length}名`, padX, 132);
 
   // 列の x 座標
@@ -65,7 +65,7 @@ export function renderRankingImage(standings, totalMatches, circleName = "TENNIS
   // 列見出し
   const chY = headerH + 30;
   ctx.fillStyle = "#6ee7b7";
-  ctx.font = "600 13px sans-serif";
+  ctx.font = "600 13px system-ui, -apple-system, sans-serif";
   ctx.textAlign = "left";
   ctx.fillText("選手", colName, chY);
   ctx.textAlign = "center";
@@ -100,7 +100,7 @@ export function renderRankingImage(standings, totalMatches, circleName = "TENNIS
 
     // 名前
     ctx.fillStyle = "#ecfdf5";
-    ctx.font = "700 20px sans-serif";
+    ctx.font = "700 20px system-ui, -apple-system, sans-serif";
     ctx.textAlign = "left";
     ctx.fillText(s.name, colName, midY + 1);
 
@@ -130,7 +130,7 @@ export function renderRankingImage(standings, totalMatches, circleName = "TENNIS
   ctx.font = "500 13px ui-monospace, monospace";
   ctx.fillText("順位: 勝率 → ゲーム率", W / 2, H - 48);
   ctx.fillStyle = "#6ee7b7";
-  ctx.font = "500 12px sans-serif";
+  ctx.font = "500 12px system-ui, -apple-system, sans-serif";
   ctx.fillText("ゲーム率 = 獲得ゲーム ÷ 全ゲーム", W / 2, H - 26);
   ctx.textAlign = "left";
 
@@ -189,7 +189,7 @@ export function renderMatchesImage(matches, nameOf, circleName = "TENNIS CIRCLE"
   ctx.textAlign = "left";
 
   ctx.fillStyle = "#34d399";
-  ctx.font = "500 14px sans-serif";
+  ctx.font = "500 14px system-ui, -apple-system, sans-serif";
   ctx.fillText(`全${matches.length}試合`, padX, 118);
 
   // 各試合行
@@ -209,7 +209,7 @@ export function renderMatchesImage(matches, nameOf, circleName = "TENNIS CIRCLE"
     // TEAM A（右寄せ）
     const aName = `${nameOf(m.a1)}・${nameOf(m.a2)}`;
     ctx.fillStyle = aWin ? "#a3e635" : "#a7f3d0";
-    ctx.font = aWin ? "700 18px sans-serif" : "500 18px sans-serif";
+    ctx.font = aWin ? "700 18px system-ui, -apple-system, sans-serif" : "500 18px system-ui, -apple-system, sans-serif";
     ctx.textAlign = "right";
     ctx.textBaseline = "middle";
     ctx.fillText(aName, teamARight, midY);
@@ -223,7 +223,7 @@ export function renderMatchesImage(matches, nameOf, circleName = "TENNIS CIRCLE"
     // TEAM B（左寄せ）
     const bName = `${nameOf(m.b1)}・${nameOf(m.b2)}`;
     ctx.fillStyle = !aWin ? "#a3e635" : "#a7f3d0";
-    ctx.font = !aWin ? "700 18px sans-serif" : "500 18px sans-serif";
+    ctx.font = !aWin ? "700 18px system-ui, -apple-system, sans-serif" : "500 18px system-ui, -apple-system, sans-serif";
     ctx.textAlign = "left";
     ctx.fillText(bName, teamBLeft, midY);
   });
