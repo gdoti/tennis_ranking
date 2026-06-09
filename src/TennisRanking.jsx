@@ -71,6 +71,15 @@ export default function TennisRanking() {
 
   const removeMatch = (id) => setMatches(matches.filter((m) => m.id !== id));
 
+  const resetAll = () => {
+    if (!window.confirm("メンバーと試合結果をすべて削除します。よろしいですか？")) return;
+    setPlayers([]);
+    setMatches([]);
+    setForm({ a1: "", a2: "", b1: "", b2: "", sa: 0, sb: 0 });
+    setError("");
+    setPlayerError("");
+  };
+
   const exportImage = () => {
     if (standings.length === 0) return;
     setImgUrl(renderRankingImage(standings, matches.length));
@@ -345,6 +354,15 @@ export default function TennisRanking() {
                 </div>
               ))}
             </div>
+
+            {(players.length > 0 || matches.length > 0) && (
+              <button
+                onClick={resetAll}
+                className="w-full mt-8 border-2 border-red-500/50 text-red-300 font-bold py-3.5 rounded-xl text-sm active:bg-red-900/40 transition-colors"
+              >
+                すべてリセット
+              </button>
+            )}
           </div>
         )}
       </div>
