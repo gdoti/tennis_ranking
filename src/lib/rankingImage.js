@@ -203,8 +203,8 @@ export function renderMatchesImage(matches, nameOf, circleName = "TENNIS CIRCLE"
     ctx.fillRect(padX - 10, top + 4, W - (padX - 10) * 2, rowH - 8);
 
     const scoreX = W / 2;
-    const teamARight = scoreX - 56;
-    const teamBLeft = scoreX + 56;
+    const teamARight = scoreX - 72;
+    const teamBLeft = scoreX + 72;
 
     // TEAM A（右寄せ）
     const aName = `${nameOf(m.a1)}・${nameOf(m.a2)}`;
@@ -215,7 +215,7 @@ export function renderMatchesImage(matches, nameOf, circleName = "TENNIS CIRCLE"
     ctx.fillText(aName, teamARight, midY);
 
     // スコア
-    ctx.font = "700 22px ui-monospace, monospace";
+    ctx.font = "700 32px ui-monospace, monospace";
     ctx.textAlign = "center";
     ctx.fillStyle = "#ecfdf5";
     ctx.fillText(`${m.sa}-${m.sb}`, scoreX, midY);
