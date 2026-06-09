@@ -20,6 +20,13 @@ export default function TennisRanking() {
   const [imgUrl, setImgUrl] = useState(null);
   const [matchImgUrl, setMatchImgUrl] = useState(null);
 
+  const nextDownloadNumber = () => {
+    const key = "tennis-download-counter";
+    const n = (parseInt(localStorage.getItem(key) ?? "0", 10) + 1);
+    localStorage.setItem(key, String(n));
+    return String(n).padStart(3, "0");
+  };
+
   const standings = useMemo(
     () => computeStandings(players, matches),
     [players, matches]
@@ -90,7 +97,7 @@ export default function TennisRanking() {
     if (!imgUrl) return;
     const a = document.createElement("a");
     a.href = imgUrl;
-    a.download = "tennis_ranking.png";
+    a.download = `tennis_ranking_${nextDownloadNumber()}.png`;
     a.click();
   };
 
@@ -103,7 +110,7 @@ export default function TennisRanking() {
     if (!matchImgUrl) return;
     const a = document.createElement("a");
     a.href = matchImgUrl;
-    a.download = "tennis_matches.png";
+    a.download = `tennis_matches_${nextDownloadNumber()}.png`;
     a.click();
   };
 
