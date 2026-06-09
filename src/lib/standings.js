@@ -3,7 +3,7 @@ export function computeStandings(players, matches) {
   const stats = {};
   players.forEach((p) => {
     stats[p.id] = {
-      id: p.id, name: p.name,
+      id: p.id, name: p.name, age: p.age ?? null,
       played: 0, win: 0, lose: 0, gamesFor: 0, gamesAgainst: 0,
     };
   });
@@ -48,6 +48,9 @@ export function computeStandings(players, matches) {
     .sort((a, b) => {
       if (b.winRate !== a.winRate) return b.winRate - a.winRate;
       if (b.gameRate !== a.gameRate) return b.gameRate - a.gameRate;
+      // 同率の場合は高齢者優先（age未設定は0扱い）
+      const ageDiff = (b.age ?? 0) - (a.age ?? 0);
+      if (ageDiff !== 0) return ageDiff;
       return a.name.localeCompare(b.name, "ja");
     });
 }

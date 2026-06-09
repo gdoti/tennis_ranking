@@ -27,6 +27,7 @@ export default function TennisRanking() {
 
   const [tab, setTab] = useState("rank");
   const [newName, setNewName] = useState("");
+  const [newAge, setNewAge] = useState("");
   const [form, setForm] = useState({ a1: "", a2: "", b1: "", b2: "", sa: 0, sb: 0 });
   const [error, setError] = useState("");
   const [playerError, setPlayerError] = useState("");
@@ -58,8 +59,10 @@ export default function TennisRanking() {
       setPlayerError(`「${name}」は既に登録されています`);
       return;
     }
-    setPlayers([...players, { id: Date.now(), name }]);
+    const age = newAge !== "" ? Number(newAge) : null;
+    setPlayers([...players, { id: Date.now(), name, age }]);
     setNewName("");
+    setNewAge("");
     setPlayerError("");
   };
 
@@ -404,8 +407,18 @@ export default function TennisRanking() {
                   if (playerError) setPlayerError("");
                 }}
                 onKeyDown={(e) => e.key === "Enter" && addPlayer()}
-                placeholder="名前を入力"
+                placeholder="名前"
                 className="flex-1 min-w-0 bg-emerald-950 rounded-xl px-4 py-3.5 text-base border-2 border-emerald-600/70 focus:border-lime-400 outline-none"
+              />
+              <input
+                type="number"
+                min="0"
+                max="120"
+                value={newAge}
+                onChange={(e) => setNewAge(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && addPlayer()}
+                placeholder="年齢"
+                className="w-20 shrink-0 bg-emerald-950 rounded-xl px-3 py-3.5 text-base border-2 border-emerald-600/70 focus:border-lime-400 outline-none"
               />
               <button
                 onClick={addPlayer}
@@ -424,12 +437,25 @@ export default function TennisRanking() {
               {players.map((p) => (
                 <div
                   key={p.id}
-                  className="flex items-center justify-between bg-emerald-800/60 rounded-xl px-4 py-3.5 border border-emerald-600/40"
+                  className="flex items-center gap-3 bg-emerald-800/60 rounded-xl px-4 py-3 border border-emerald-600/40"
                 >
-                  <span className="font-bold text-base">{p.name}</span>
+                  <span className="font-bold text-base flex-1 min-w-0 truncate">{p.name}</span>
+                  <input
+                    type="number"
+                    min="0"
+                    max="120"
+                    value={p.age ?? ""}
+                    onChange={(e) => {
+                      const age = e.target.value !== "" ? Number(e.target.value) : null;
+                      setPlayers(players.map((pl) => pl.id === p.id ? { ...pl, age } : pl));
+                    }}
+                    placeholder="年齢"
+                    className="w-16 shrink-0 bg-emerald-950 rounded-lg px-2 py-1.5 text-sm text-center border border-emerald-600/50 focus:border-lime-400 outline-none"
+                  />
+                  <span className="text-emerald-300/50 text-xs shrink-0">歳</span>
                   <button
                     onClick={() => removePlayer(p.id)}
-                    className="text-emerald-300/50 active:text-red-400 text-sm px-2 py-1"
+                    className="text-emerald-300/50 active:text-red-400 text-sm px-1 py-1 shrink-0"
                   >
                     削除
                   </button>
