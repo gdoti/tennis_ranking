@@ -104,9 +104,9 @@ export default function TennisRanking() {
     setPlayerError("");
   };
 
-  const exportImage = () => {
+  const exportImage = async () => {
     if (standings.length === 0) return;
-    setImgUrl(renderRankingImage(standings, matches.length, circleName, outputDate));
+    setImgUrl(await renderRankingImage(standings, matches.length, circleName, outputDate));
   };
 
   const downloadImage = () => {
@@ -117,9 +117,9 @@ export default function TennisRanking() {
     a.click();
   };
 
-  const exportMatchesImage = () => {
+  const exportMatchesImage = async () => {
     if (matches.length === 0) return;
-    setMatchImgUrl(renderMatchesImage(matches, nameOf, circleName, outputDate));
+    setMatchImgUrl(await renderMatchesImage(matches, nameOf, circleName, outputDate));
   };
 
   const downloadMatchesImage = () => {
@@ -202,12 +202,12 @@ export default function TennisRanking() {
                     setEditingName(false);
                   }
                 }}
-                className="text-xl font-bold tracking-tight font-mono bg-emerald-900 border-b-2 border-lime-400 outline-none text-lime-400 w-44 min-w-0"
+                className="text-xl tracking-tight bg-emerald-900 border-b-2 border-lime-400 outline-none text-lime-400 w-44 min-w-0" style={{fontFamily:"'Black Ops One', sans-serif"}}
               />
             ) : (
               <button
                 onClick={() => { setNameInput(circleName); setEditingName(true); }}
-                className="text-2xl font-bold tracking-tight font-mono truncate text-left hover:text-lime-300 active:text-lime-400 transition-colors"
+                className="text-2xl tracking-tight truncate text-left hover:text-lime-300 active:text-lime-400 transition-colors" style={{fontFamily:"'Black Ops One', sans-serif"}}
                 title="タップして編集"
               >
                 {circleName}

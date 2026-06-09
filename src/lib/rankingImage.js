@@ -1,5 +1,12 @@
+const TITLE_FONT = "'Black Ops One', system-ui, -apple-system, sans-serif";
+
+async function ensureTitleFont() {
+  await document.fonts.ready;
+}
+
 // 順位表を Canvas に描画して PNG dataURL を返す
-export function renderRankingImage(standings, totalMatches, circleName = "TENNIS CIRCLE", outputDate = "") {
+export async function renderRankingImage(standings, totalMatches, circleName = "TENNIS CIRCLE", outputDate = "") {
+  await ensureTitleFont();
   const dpr = 2;
   const W = 820;
   const padX = 36;
@@ -33,7 +40,7 @@ export function renderRankingImage(standings, totalMatches, circleName = "TENNIS
 
   // タイトル
   ctx.fillStyle = "#ecfdf5";
-  ctx.font = "700 34px ui-monospace, monospace";
+  ctx.font = `400 34px ${TITLE_FONT}`;
   ctx.textBaseline = "alphabetic";
   ctx.fillText(circleName, padX + 34, 62);
 
@@ -138,7 +145,8 @@ export function renderRankingImage(standings, totalMatches, circleName = "TENNIS
 }
 
 // 全試合結果を Canvas に描画して PNG dataURL を返す
-export function renderMatchesImage(matches, nameOf, circleName = "TENNIS CIRCLE", outputDate = "") {
+export async function renderMatchesImage(matches, nameOf, circleName = "TENNIS CIRCLE", outputDate = "") {
+  await ensureTitleFont();
   const dpr = 2;
   const W = 820;
   const padX = 36;
@@ -171,7 +179,7 @@ export function renderMatchesImage(matches, nameOf, circleName = "TENNIS CIRCLE"
 
   // タイトル
   ctx.fillStyle = "#ecfdf5";
-  ctx.font = "700 34px ui-monospace, monospace";
+  ctx.font = `400 34px ${TITLE_FONT}`;
   ctx.textBaseline = "alphabetic";
   ctx.fillText(circleName, padX + 34, 56);
 
