@@ -11,6 +11,11 @@ export default function TennisRanking() {
   const [matches, setMatches] = useState(
     () => loadState()?.matches ?? DEFAULT_MATCHES
   );
+  const [circleName, setCircleName] = useState(
+    () => loadState()?.circleName ?? "TENNIS CIRCLE"
+  );
+  const [editingName, setEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState("");
 
   const [tab, setTab] = useState("rank");
   const [newName, setNewName] = useState("");
@@ -34,8 +39,8 @@ export default function TennisRanking() {
 
   // 変更があるたびに localStorage へ保存（次回アクセス時に復元される）
   useEffect(() => {
-    saveState({ players, matches });
-  }, [players, matches]);
+    saveState({ players, matches, circleName });
+  }, [players, matches, circleName]);
   const nameOf = (id) => players.find((p) => p.id === id)?.name ?? "?";
 
   const addPlayer = () => {
@@ -90,7 +95,7 @@ export default function TennisRanking() {
 
   const exportImage = () => {
     if (standings.length === 0) return;
-    setImgUrl(renderRankingImage(standings, matches.length));
+    setImgUrl(renderRankingImage(standings, matches.length, circleName));
   };
 
   const downloadImage = () => {
@@ -103,7 +108,7 @@ export default function TennisRanking() {
 
   const exportMatchesImage = () => {
     if (matches.length === 0) return;
-    setMatchImgUrl(renderMatchesImage(matches, nameOf));
+    setMatchImgUrl(renderMatchesImage(matches, nameOf, circleName));
   };
 
   const downloadMatchesImage = () => {
@@ -167,7 +172,36 @@ export default function TennisRanking() {
         <div className="flex items-center justify-between gap-2 mb-1">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="w-3 h-3 shrink-0 rounded-full bg-lime-400 shadow-[0_0_12px_2px] shadow-lime-400/60" />
-            <h1 className="text-2xl font-bold tracking-tight font-mono truncate">TENNIS CIRCLE</h1>
+            {editingName ? (
+              <input
+                autoFocus
+                value={nameInput}
+                onChange={(e) => setNameInput(e.target.value)}
+                onBlur={() => {
+                  const v = nameInput.trim() || "TENNIS CIRCLE";
+                  setCircleName(v);
+                  setEditingName(false);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    const v = nameInput.trim() || "TENNIS CIRCLE";
+                    setCircleName(v);
+                    setEditingName(false);
+                  } else if (e.key === "Escape") {
+                    setEditingName(false);
+                  }
+                }}
+                className="text-xl font-bold tracking-tight font-mono bg-emerald-900 border-b-2 border-lime-400 outline-none text-lime-400 w-44 min-w-0"
+              />
+            ) : (
+              <button
+                onClick={() => { setNameInput(circleName); setEditingName(true); }}
+                className="text-2xl font-bold tracking-tight font-mono truncate text-left hover:text-lime-300 active:text-lime-400 transition-colors"
+                title="タップして編集"
+              >
+                {circleName}
+              </button>
+            )}
           </div>
           <div className="flex gap-1.5 shrink-0">
             {standings.length > 0 && (

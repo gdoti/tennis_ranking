@@ -1,5 +1,5 @@
 // 順位表を Canvas に描画して PNG dataURL を返す
-export function renderRankingImage(standings, totalMatches) {
+export function renderRankingImage(standings, totalMatches, circleName = "TENNIS CIRCLE") {
   const dpr = 2;
   const W = 820;
   const padX = 36;
@@ -35,7 +35,7 @@ export function renderRankingImage(standings, totalMatches) {
   ctx.fillStyle = "#ecfdf5";
   ctx.font = "700 34px ui-monospace, monospace";
   ctx.textBaseline = "alphabetic";
-  ctx.fillText("TENNIS CIRCLE", padX + 34, 62);
+  ctx.fillText(circleName, padX + 34, 62);
 
   ctx.fillStyle = "#6ee7b7";
   ctx.font = "600 15px ui-monospace, monospace";
@@ -137,7 +137,7 @@ export function renderRankingImage(standings, totalMatches) {
 }
 
 // 全試合結果を Canvas に描画して PNG dataURL を返す
-export function renderMatchesImage(matches, nameOf) {
+export function renderMatchesImage(matches, nameOf, circleName = "TENNIS CIRCLE") {
   const dpr = 2;
   const W = 820;
   const padX = 36;
@@ -172,7 +172,7 @@ export function renderMatchesImage(matches, nameOf) {
   ctx.fillStyle = "#ecfdf5";
   ctx.font = "700 34px ui-monospace, monospace";
   ctx.textBaseline = "alphabetic";
-  ctx.fillText("TENNIS CIRCLE", padX + 34, 56);
+  ctx.fillText(circleName, padX + 34, 56);
 
   ctx.fillStyle = "#6ee7b7";
   ctx.font = "600 15px ui-monospace, monospace";
