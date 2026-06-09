@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { computeStandings } from "./lib/standings";
-import { renderRankingImage } from "./lib/rankingImage";
+import { renderRankingImage, renderMatchesImage } from "./lib/rankingImage";
 import { loadState, saveState } from "./lib/storage";
 import { DEFAULT_PLAYERS, DEFAULT_MATCHES } from "./data/defaults";
 
@@ -18,6 +18,7 @@ export default function TennisRanking() {
   const [error, setError] = useState("");
   const [playerError, setPlayerError] = useState("");
   const [imgUrl, setImgUrl] = useState(null);
+  const [matchImgUrl, setMatchImgUrl] = useState(null);
 
   const standings = useMemo(
     () => computeStandings(players, matches),
@@ -93,6 +94,19 @@ export default function TennisRanking() {
     a.click();
   };
 
+  const exportMatchesImage = () => {
+    if (matches.length === 0) return;
+    setMatchImgUrl(renderMatchesImage(matches, nameOf));
+  };
+
+  const downloadMatchesImage = () => {
+    if (!matchImgUrl) return;
+    const a = document.createElement("a");
+    a.href = matchImgUrl;
+    a.download = "tennis_matches.png";
+    a.click();
+  };
+
   const medal = ["bg-yellow-400 text-stone-900", "bg-gray-300 text-stone-900", "bg-amber-600 text-white"];
 
   // 入力欄は text-base（16px以上）= iOS Safari のフォーカス時自動ズームを防止
@@ -148,14 +162,24 @@ export default function TennisRanking() {
             <div className="w-3 h-3 shrink-0 rounded-full bg-lime-400 shadow-[0_0_12px_2px] shadow-lime-400/60" />
             <h1 className="text-2xl font-bold tracking-tight font-mono truncate">TENNIS CIRCLE</h1>
           </div>
-          {standings.length > 0 && (
-            <button
-              onClick={exportImage}
-              className="bg-lime-400 text-emerald-950 font-bold py-2 px-3 rounded-lg text-xs active:bg-lime-300 transition-colors flex items-center gap-1 shrink-0"
-            >
-              <span>🖼</span> 結果出力
-            </button>
-          )}
+          <div className="flex gap-1.5 shrink-0">
+            {standings.length > 0 && (
+              <button
+                onClick={exportImage}
+                className="bg-lime-400 text-emerald-950 font-bold py-2 px-3 rounded-lg text-xs active:bg-lime-300 transition-colors flex items-center gap-1"
+              >
+                <span>🖼</span> 結果出力
+              </button>
+            )}
+            {matches.length > 0 && (
+              <button
+                onClick={exportMatchesImage}
+                className="bg-emerald-600 text-emerald-50 font-bold py-2 px-3 rounded-lg text-xs active:bg-emerald-500 transition-colors flex items-center gap-1 border border-emerald-400/50"
+              >
+                <span>📋</span> 試合一覧
+              </button>
+            )}
+          </div>
         </div>
         <p className="text-emerald-300/70 text-[11px] mb-5 ml-5 tracking-widest uppercase font-mono">
           doubles &middot; score &amp; ranking
@@ -366,6 +390,47 @@ export default function TennisRanking() {
           </div>
         )}
       </div>
+
+      {/* 全試合結果 モーダル */}
+      {matchImgUrl && (
+        <div
+          className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setMatchImgUrl(null)}
+        >
+          <div
+            className="bg-emerald-900 rounded-2xl border-2 border-emerald-500/50 shadow-2xl shadow-black/60 w-full max-w-md max-h-[90vh] flex flex-col overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-4 py-3 border-b border-emerald-700/60 shrink-0">
+              <h2 className="font-bold text-base">全試合結果</h2>
+              <button
+                onClick={() => setMatchImgUrl(null)}
+                className="text-emerald-300/70 active:text-emerald-100 text-2xl leading-none px-1"
+              >
+                ×
+              </button>
+            </div>
+            <div className="p-4 overflow-y-auto">
+              <img
+                src={matchImgUrl}
+                alt="全試合結果"
+                className="w-full rounded-xl border-2 border-emerald-500/40"
+              />
+              <p className="text-[11px] text-emerald-300/70 mt-2 text-center">
+                画像を長押しで保存、または下のボタンでダウンロード
+              </p>
+            </div>
+            <div className="p-4 pt-0 shrink-0">
+              <button
+                onClick={downloadMatchesImage}
+                className="w-full bg-lime-400 text-emerald-950 font-bold py-3.5 rounded-xl text-base active:bg-lime-300 transition-colors"
+              >
+                ダウンロード
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 画像プレビュー モーダル */}
       {imgUrl && (

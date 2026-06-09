@@ -127,10 +127,111 @@ export function renderRankingImage(standings, totalMatches) {
   ctx.textAlign = "center";
   ctx.fillStyle = "#34d399";
   ctx.font = "500 13px ui-monospace, monospace";
-  ctx.fillText("順位: 勝数 → ゲーム率 → 勝率", W / 2, H - 48);
+  ctx.fillText("順位: 勝率 → ゲーム率", W / 2, H - 48);
   ctx.fillStyle = "#6ee7b7";
   ctx.font = "500 12px sans-serif";
   ctx.fillText("ゲーム率 = 獲得ゲーム ÷ 全ゲーム", W / 2, H - 26);
+  ctx.textAlign = "left";
+
+  return canvas.toDataURL("image/png");
+}
+
+// 全試合結果を Canvas に描画して PNG dataURL を返す
+export function renderMatchesImage(matches, nameOf) {
+  const dpr = 2;
+  const W = 820;
+  const padX = 36;
+  const headerH = 140;
+  const rowH = 58;
+  const footerH = 60;
+  const H = headerH + matches.length * rowH + footerH;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  const ctx = canvas.getContext("2d");
+  ctx.scale(dpr, dpr);
+
+  // 背景
+  ctx.fillStyle = "#022c22";
+  ctx.fillRect(0, 0, W, H);
+
+  // ヘッダー帯
+  ctx.fillStyle = "#064e3b";
+  ctx.fillRect(0, 0, W, headerH);
+  ctx.fillStyle = "#a3e635";
+  ctx.fillRect(0, headerH - 4, W, 4);
+
+  // テニスボール
+  ctx.beginPath();
+  ctx.arc(padX + 12, 46, 11, 0, Math.PI * 2);
+  ctx.fillStyle = "#a3e635";
+  ctx.fill();
+
+  // タイトル
+  ctx.fillStyle = "#ecfdf5";
+  ctx.font = "700 34px ui-monospace, monospace";
+  ctx.textBaseline = "alphabetic";
+  ctx.fillText("TENNIS CIRCLE", padX + 34, 56);
+
+  ctx.fillStyle = "#6ee7b7";
+  ctx.font = "600 15px ui-monospace, monospace";
+  ctx.fillText("ALL MATCH RESULTS", padX, 88);
+
+  const now = new Date();
+  const dateStr = `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, "0")}.${String(now.getDate()).padStart(2, "0")}`;
+  ctx.fillStyle = "#a7f3d0";
+  ctx.font = "500 15px ui-monospace, monospace";
+  ctx.textAlign = "right";
+  ctx.fillText(dateStr, W - padX, 88);
+  ctx.textAlign = "left";
+
+  ctx.fillStyle = "#34d399";
+  ctx.font = "500 14px sans-serif";
+  ctx.fillText(`全${matches.length}試合`, padX, 118);
+
+  // 各試合行
+  [...matches].reverse().forEach((m, i) => {
+    const top = headerH + i * rowH;
+    const midY = top + rowH / 2;
+    const aWin = m.sa > m.sb;
+
+    // 行背景
+    ctx.fillStyle = i % 2 === 0 ? "rgba(6,78,59,0.55)" : "rgba(6,78,59,0.25)";
+    ctx.fillRect(padX - 10, top + 4, W - (padX - 10) * 2, rowH - 8);
+
+    const scoreX = W / 2;
+    const teamARight = scoreX - 56;
+    const teamBLeft = scoreX + 56;
+
+    // TEAM A（右寄せ）
+    const aName = `${nameOf(m.a1)}・${nameOf(m.a2)}`;
+    ctx.fillStyle = aWin ? "#a3e635" : "#a7f3d0";
+    ctx.font = aWin ? "700 18px sans-serif" : "500 18px sans-serif";
+    ctx.textAlign = "right";
+    ctx.textBaseline = "middle";
+    ctx.fillText(aName, teamARight, midY);
+
+    // スコア
+    ctx.font = "700 22px ui-monospace, monospace";
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#ecfdf5";
+    ctx.fillText(`${m.sa}-${m.sb}`, scoreX, midY);
+
+    // TEAM B（左寄せ）
+    const bName = `${nameOf(m.b1)}・${nameOf(m.b2)}`;
+    ctx.fillStyle = !aWin ? "#a3e635" : "#a7f3d0";
+    ctx.font = !aWin ? "700 18px sans-serif" : "500 18px sans-serif";
+    ctx.textAlign = "left";
+    ctx.fillText(bName, teamBLeft, midY);
+  });
+
+  // フッター
+  ctx.textBaseline = "alphabetic";
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#34d399";
+  ctx.font = "500 13px ui-monospace, monospace";
+  ctx.fillText("勝者チームを緑で表示", W / 2, H - 22);
   ctx.textAlign = "left";
 
   return canvas.toDataURL("image/png");
