@@ -2,8 +2,8 @@ import React, { useState, useMemo, useEffect, useRef } from "react";
 import { computeStandings } from "./lib/standings";
 import { renderRankingImage, renderMatchesImage } from "./lib/rankingImage";
 import {
-  getSavedRoomCode, saveRoomCode, clearRoomCode,
-  generateRoomCode, createRoom, roomExists,
+  getSavedRoomCode, getSavedPassword, saveRoomCode, savePassword, clearRoomCode,
+  generateRoomCode, createRoom, roomExists, verifyPassword,
   subscribeRoom, updateRoom,
 } from "./lib/db";
 
@@ -18,10 +18,14 @@ const todayStr = () => {
 function RoomScreen({ onJoin }) {
   const [mode, setMode] = useState(null); // "create" | "join"
   const [inputCode, setInputCode] = useState("");
+  const [inputPassword, setInputPassword] = useState("");
+  const [createPassword, setCreatePassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const handleCreate = async () => {
+    const pass = createPassword.trim();
+    if (!pass) { setError("パスワードを入力してください"); return; }
     setLoading(true);
     setError("");
     const code = generateRoomCode();
@@ -29,20 +33,27 @@ function RoomScreen({ onJoin }) {
       players: [], matches: [],
       circleName: "TENNIS CIRCLE",
       outputDate: todayStr(),
+      password: pass,
     });
     saveRoomCode(code);
-    onJoin(code);
+    savePassword(pass);
+    onJoin(code, pass);
   };
 
   const handleJoin = async () => {
     const code = inputCode.trim().toUpperCase();
+    const pass = inputPassword.trim();
     if (code.length < 4) { setError("ルームコードを入力してください"); return; }
+    if (!pass) { setError("パスワードを入力してください"); return; }
     setLoading(true);
     setError("");
     const exists = await roomExists(code);
     if (!exists) { setError("ルームが見つかりません"); setLoading(false); return; }
+    const ok = await verifyPassword(code, pass);
+    if (!ok) { setError("パスワードが違います"); setLoading(false); return; }
     saveRoomCode(code);
-    onJoin(code);
+    savePassword(pass);
+    onJoin(code, pass);
   };
 
   return (
@@ -60,9 +71,8 @@ function RoomScreen({ onJoin }) {
       {mode === null && (
         <div className="w-full max-w-xs flex flex-col gap-3">
           <button
-            onClick={handleCreate}
-            disabled={loading}
-            className="w-full bg-lime-400 text-emerald-950 font-bold py-4 rounded-2xl text-base active:bg-lime-300 transition-colors disabled:opacity-50"
+            onClick={() => setMode("create")}
+            className="w-full bg-lime-400 text-emerald-950 font-bold py-4 rounded-2xl text-base active:bg-lime-300 transition-colors"
           >
             🎾 新しくルームを作る
           </button>
@@ -75,35 +85,61 @@ function RoomScreen({ onJoin }) {
         </div>
       )}
 
+      {mode === "create" && (
+        <div className="w-full max-w-xs flex flex-col gap-3">
+          <p className="text-emerald-300/70 text-sm text-center">ルームのパスワードを設定してください</p>
+          <input
+            autoFocus
+            type="password"
+            value={createPassword}
+            onChange={(e) => { setCreatePassword(e.target.value); setError(""); }}
+            onKeyDown={(e) => e.key === "Enter" && handleCreate()}
+            placeholder="パスワード"
+            className="w-full bg-emerald-900 rounded-2xl px-4 py-4 text-base text-center border-2 border-emerald-600/70 focus:border-lime-400 outline-none"
+          />
+          {error && (
+            <p className="text-red-300 text-sm text-center bg-red-900/40 rounded-xl py-2 border border-red-500/40">{error}</p>
+          )}
+          <button
+            onClick={handleCreate}
+            disabled={loading}
+            className="w-full bg-lime-400 text-emerald-950 font-bold py-4 rounded-2xl text-base active:bg-lime-300 transition-colors disabled:opacity-50"
+          >
+            {loading ? "作成中..." : "ルームを作成"}
+          </button>
+          <button onClick={() => { setMode(null); setError(""); }} className="text-emerald-400/60 text-sm text-center py-2">戻る</button>
+        </div>
+      )}
+
       {mode === "join" && (
         <div className="w-full max-w-xs flex flex-col gap-3">
           <input
             autoFocus
             value={inputCode}
             onChange={(e) => { setInputCode(e.target.value.toUpperCase()); setError(""); }}
-            onKeyDown={(e) => e.key === "Enter" && handleJoin()}
-            placeholder="ルームコードを入力"
+            placeholder="ルームコード"
             maxLength={8}
             className="w-full bg-emerald-900 rounded-2xl px-4 py-4 text-xl font-mono text-center border-2 border-emerald-600/70 focus:border-lime-400 outline-none tracking-widest"
           />
+          <input
+            type="password"
+            value={inputPassword}
+            onChange={(e) => { setInputPassword(e.target.value); setError(""); }}
+            onKeyDown={(e) => e.key === "Enter" && handleJoin()}
+            placeholder="パスワード"
+            className="w-full bg-emerald-900 rounded-2xl px-4 py-4 text-base text-center border-2 border-emerald-600/70 focus:border-lime-400 outline-none"
+          />
           {error && (
-            <p className="text-red-300 text-sm text-center bg-red-900/40 rounded-xl py-2 border border-red-500/40">
-              {error}
-            </p>
+            <p className="text-red-300 text-sm text-center bg-red-900/40 rounded-xl py-2 border border-red-500/40">{error}</p>
           )}
           <button
             onClick={handleJoin}
             disabled={loading}
             className="w-full bg-lime-400 text-emerald-950 font-bold py-4 rounded-2xl text-base active:bg-lime-300 transition-colors disabled:opacity-50"
           >
-            {loading ? "接続中..." : "参加する"}
+            {loading ? "確認中..." : "参加する"}
           </button>
-          <button
-            onClick={() => { setMode(null); setError(""); }}
-            className="text-emerald-400/60 text-sm text-center py-2"
-          >
-            戻る
-          </button>
+          <button onClick={() => { setMode(null); setError(""); }} className="text-emerald-400/60 text-sm text-center py-2">戻る</button>
         </div>
       )}
     </div>
@@ -115,6 +151,7 @@ function RoomScreen({ onJoin }) {
 // ────────────────────────────────────────────
 export default function TennisRanking() {
   const [roomCode, setRoomCode] = useState(() => getSavedRoomCode());
+  const [password, setPassword] = useState(() => getSavedPassword());
 
   // Firestoreから同期されるデータ
   const [players, setPlayers] = useState([]);
@@ -146,7 +183,7 @@ export default function TennisRanking() {
     return unsub;
   }, [roomCode]);
 
-  const update = (patch) => updateRoom(roomCode, patch);
+  const update = (patch) => updateRoom(roomCode, password, patch);
 
   const nameOf = (id) => players.find((p) => p.id === id)?.name ?? "?";
 
@@ -154,7 +191,7 @@ export default function TennisRanking() {
 
   // ルーム参加前は選択画面
   if (!roomCode) {
-    return <RoomScreen onJoin={setRoomCode} />;
+    return <RoomScreen onJoin={(code, pass) => { setRoomCode(code); setPassword(pass); }} />;
   }
 
   // ────── ハンドラ ──────
