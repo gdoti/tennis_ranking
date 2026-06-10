@@ -6,6 +6,5 @@ import tailwindcss from "@tailwindcss/vite";
 // 例: https://ユーザー名.github.io/tennis-ranking/ で公開するなら "/tennis-ranking/"
 // 独自ドメインやユーザーサイト(ルート配信)なら "/" にするか base 行を削除する。
 export default defineConfig({
-  base: "/tennis_ranking/",
   plugins: [react(), tailwindcss()],
 });
