@@ -31,8 +31,6 @@ function RoomScreen({ onJoin }) {
   const [error, setError] = useState("");
 
   const goToMasterStep = () => {
-    const pass = createPassword.trim();
-    if (!pass) { setError("パスワードを入力してください"); return; }
     setError("");
     setCreateStep(2);
   };
@@ -91,7 +89,6 @@ function RoomScreen({ onJoin }) {
     const code = inputCode.trim().toUpperCase();
     const pass = inputPassword.trim();
     if (code.length < 4) { setError("ルームコードを入力してください"); return; }
-    if (!pass) { setError("パスワードを入力してください"); return; }
     setLoading(true);
     setError("");
     const exists = await roomExists(code);
@@ -140,14 +137,14 @@ function RoomScreen({ onJoin }) {
       {/* ── ルーム作成 ステップ1: パスワード設定 ── */}
       {mode === "create" && createStep === 1 && (
         <div className="w-full max-w-xs flex flex-col gap-3">
-          <p className="text-emerald-300/70 text-sm text-center">ルームのパスワードを設定してください</p>
+          <p className="text-emerald-300/70 text-sm text-center">パスワードを設定してください（任意）</p>
           <input
             autoFocus
             type="password"
             value={createPassword}
             onChange={(e) => { setCreatePassword(e.target.value); setError(""); }}
             onKeyDown={(e) => e.key === "Enter" && goToMasterStep()}
-            placeholder="パスワード"
+            placeholder="パスワード（空欄でもOK）"
             className="w-full bg-emerald-900 rounded-2xl px-4 py-4 text-base text-center border-2 border-emerald-600/70 focus:border-lime-400 outline-none"
           />
           {error && (
@@ -250,7 +247,7 @@ function RoomScreen({ onJoin }) {
             value={inputPassword}
             onChange={(e) => { setInputPassword(e.target.value); setError(""); }}
             onKeyDown={(e) => e.key === "Enter" && handleJoin()}
-            placeholder="パスワード"
+            placeholder="パスワード（設定なしの場合は空欄）"
             className="w-full bg-emerald-900 rounded-2xl px-4 py-4 text-base text-center border-2 border-emerald-600/70 focus:border-lime-400 outline-none"
           />
           {error && (
