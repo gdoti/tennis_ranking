@@ -62,23 +62,29 @@ function RoomScreen({ onJoin }) {
     const pass = createPassword.trim();
     setLoading(true);
     setError("");
-    // マスターから選んだメンバーを初期プレイヤーとして使う
-    const initialPlayers = masterPlayers
-      ? masterPlayers
-          .filter((p) => selectedIds.has(p.id))
-          .map((p) => ({ id: Date.now() + Math.random(), name: p.name, age: p.age ?? null }))
-      : [];
-    const code = generateRoomCode();
-    await createRoom(code, {
-      players: initialPlayers, matches: [],
-      circleName: "TENNIS CIRCLE",
-      outputDate: todayStr(),
-      password: pass,
-    });
-    saveRoomCode(code);
-    savePassword(pass);
-    saveIsAdmin(true);
-    onJoin(code, pass, true);
+    try {
+      // マスターから選んだメンバーを初期プレイヤーとして使う
+      const initialPlayers = masterPlayers
+        ? masterPlayers
+            .filter((p) => selectedIds.has(p.id))
+            .map((p) => ({ id: Date.now() + Math.random(), name: p.name, age: p.age ?? null }))
+        : [];
+      const code = generateRoomCode();
+      await createRoom(code, {
+        players: initialPlayers, matches: [],
+        circleName: "TENNIS CIRCLE",
+        outputDate: todayStr(),
+        password: pass,
+      });
+      saveRoomCode(code);
+      savePassword(pass);
+      saveIsAdmin(true);
+      onJoin(code, pass, true);
+    } catch (e) {
+      console.error(e);
+      setError("ルームの作成に失敗しました。時間をおいて再試行してください。");
+      setLoading(false);
+    }
   };
 
   const handleJoin = async () => {
