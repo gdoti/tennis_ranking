@@ -3,6 +3,7 @@ import { db } from "./firebase";
 
 const ROOM_KEY = "tennis-room-code";
 const PASS_KEY = "tennis-room-password";
+const ADMIN_KEY = "tennis-room-admin";
 
 export function getSavedRoomCode() {
   return localStorage.getItem(ROOM_KEY) || "";
@@ -10,6 +11,10 @@ export function getSavedRoomCode() {
 
 export function getSavedPassword() {
   return localStorage.getItem(PASS_KEY) || "";
+}
+
+export function getSavedIsAdmin() {
+  return localStorage.getItem(ADMIN_KEY) === "1";
 }
 
 export function saveRoomCode(code) {
@@ -20,9 +25,18 @@ export function savePassword(password) {
   localStorage.setItem(PASS_KEY, password);
 }
 
+export function saveIsAdmin(isAdmin) {
+  if (isAdmin) {
+    localStorage.setItem(ADMIN_KEY, "1");
+  } else {
+    localStorage.removeItem(ADMIN_KEY);
+  }
+}
+
 export function clearRoomCode() {
   localStorage.removeItem(ROOM_KEY);
   localStorage.removeItem(PASS_KEY);
+  localStorage.removeItem(ADMIN_KEY);
 }
 
 export function generateRoomCode() {

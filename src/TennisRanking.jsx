@@ -2,7 +2,8 @@ import React, { useState, useMemo, useEffect, useRef } from "react";
 import { computeStandings } from "./lib/standings";
 import { renderRankingImage, renderMatchesImage } from "./lib/rankingImage";
 import {
-  getSavedRoomCode, getSavedPassword, saveRoomCode, savePassword, clearRoomCode,
+  getSavedRoomCode, getSavedPassword, getSavedIsAdmin,
+  saveRoomCode, savePassword, saveIsAdmin, clearRoomCode,
   generateRoomCode, createRoom, roomExists, verifyPassword,
   subscribeRoom, updateRoom,
 } from "./lib/db";
@@ -37,7 +38,8 @@ function RoomScreen({ onJoin }) {
     });
     saveRoomCode(code);
     savePassword(pass);
-    onJoin(code, pass);
+    saveIsAdmin(true);
+    onJoin(code, pass, true);
   };
 
   const handleJoin = async () => {
@@ -53,7 +55,8 @@ function RoomScreen({ onJoin }) {
     if (!ok) { setError("パスワードが違います"); setLoading(false); return; }
     saveRoomCode(code);
     savePassword(pass);
-    onJoin(code, pass);
+    saveIsAdmin(false);
+    onJoin(code, pass, false);
   };
 
   return (
@@ -152,6 +155,7 @@ function RoomScreen({ onJoin }) {
 export default function TennisRanking() {
   const [roomCode, setRoomCode] = useState(() => getSavedRoomCode());
   const [password, setPassword] = useState(() => getSavedPassword());
+  const [isAdmin, setIsAdmin] = useState(() => getSavedIsAdmin());
 
   // Firestoreから同期されるデータ
   const [players, setPlayers] = useState([]);
@@ -191,7 +195,11 @@ export default function TennisRanking() {
 
   // ルーム参加前は選択画面
   if (!roomCode) {
-    return <RoomScreen onJoin={(code, pass) => { setRoomCode(code); setPassword(pass); }} />;
+    return <RoomScreen onJoin={(code, pass, admin) => {
+      setRoomCode(code);
+      setPassword(pass);
+      setIsAdmin(admin);
+    }} />;
   }
 
   // ────── ハンドラ ──────
@@ -515,10 +523,10 @@ export default function TennisRanking() {
                 </div>
               ))}
             </div>
-            {(players.length > 0 || matches.length > 0) && (
+            {isAdmin && (players.length > 0 || matches.length > 0) && (
               <button onClick={resetAll}
                 className="w-full mt-6 border-2 border-red-500/50 text-red-300 font-bold py-3.5 rounded-xl text-sm active:bg-red-900/40 transition-colors">
-                すべてリセット
+                🔒 すべてリセット（管理者のみ）
               </button>
             )}
             <button onClick={leaveRoom}
