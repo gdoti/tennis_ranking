@@ -4,6 +4,15 @@ import { db } from "./firebase";
 const ROOM_KEY = "tennis-room-code";
 const PASS_KEY = "tennis-room-password";
 const ADMIN_KEY = "tennis-room-admin";
+const MASTER_KEY = "tennis-master-code";
+
+export function getSavedMasterCode() {
+  return localStorage.getItem(MASTER_KEY) || "";
+}
+
+export function saveMasterCode(code) {
+  if (code) localStorage.setItem(MASTER_KEY, code);
+}
 
 export function getSavedRoomCode() {
   return localStorage.getItem(ROOM_KEY) || "";

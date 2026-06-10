@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect, useRef } from "react";
 import { computeStandings } from "./lib/standings";
 import { renderRankingImage, renderMatchesImage } from "./lib/rankingImage";
 import {
-  getSavedRoomCode, getSavedPassword, getSavedIsAdmin,
+  getSavedRoomCode, getSavedPassword, getSavedIsAdmin, getSavedMasterCode, saveMasterCode,
   saveRoomCode, savePassword, saveIsAdmin, clearRoomCode,
   generateRoomCode, createRoom, roomExists, verifyPassword,
   subscribeRoom, updateRoom, fetchRoomPlayers,
@@ -20,7 +20,7 @@ function RoomScreen({ onJoin }) {
   const [mode, setMode] = useState(null); // "create" | "join"
   // create用
   const [createPassword, setCreatePassword] = useState("");
-  const [masterCode, setMasterCode] = useState("");
+  const [masterCode, setMasterCode] = useState(() => getSavedMasterCode());
   const [masterPlayers, setMasterPlayers] = useState(null); // null=未取得, []=取得済み
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [createStep, setCreateStep] = useState(1); // 1=パスワード入力, 2=マスター選択
@@ -44,6 +44,7 @@ function RoomScreen({ onJoin }) {
     setLoading(false);
     if (players === null) { setError("ルームが見つかりません"); return; }
     if (players.length === 0) { setError("このルームにメンバーが登録されていません"); return; }
+    saveMasterCode(code);
     setMasterPlayers(players);
     setSelectedIds(new Set(players.map((p) => p.id)));
   };
