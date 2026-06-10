@@ -422,7 +422,7 @@ export default function TennisRanking() {
     const ids = [a1, a2, b1, b2];
     if (ids.some((v) => v === "")) { setError("4人すべて選んでください"); return; }
     if (new Set(ids).size !== 4) { setError("同じ選手が重複しています"); return; }
-    if (Number(sa) === Number(sb)) { setError("スコアを入力してください（同点は登録できません）"); return; }
+    if (Number(sa) === 0 && Number(sb) === 0) { setError("スコアを入力してください"); return; }
     const next = [...matches, {
       id: Date.now(),
       a1: Number(a1), a2: Number(a2),
@@ -625,7 +625,7 @@ export default function TennisRanking() {
                 <div className="flex-1 min-w-0">
                   <div className="font-bold text-[17px] truncate leading-tight">{s.name}</div>
                   <div className="text-xs text-emerald-300/70 mt-1.5 font-mono">
-                    {s.played}試合 ・ 勝率{(s.winRate * 100).toFixed(0)}% ・ G率{(s.gameRate * 100).toFixed(1)}%
+                    {s.played}試合 ・ 勝率{(s.winRate * 100).toFixed(0)}% ・ G率{(s.gameRate * 100).toFixed(1)}%{s.draw > 0 ? ` ・ 引分${s.draw}` : ""}
                   </div>
                 </div>
                 <div className="text-right shrink-0 font-mono leading-none">
@@ -633,8 +633,14 @@ export default function TennisRanking() {
                     <span className="text-2xl font-bold text-lime-400">{s.win}</span>
                     <span className="text-emerald-300/40 text-lg font-light">/</span>
                     <span className="text-lg font-bold text-emerald-200/90">{s.lose}</span>
+                    {s.draw > 0 && <>
+                      <span className="text-emerald-300/40 text-lg font-light">/</span>
+                      <span className="text-base font-bold text-yellow-300/80">{s.draw}</span>
+                    </>}
                   </div>
-                  <div className="text-[10px] text-emerald-300/50 mt-2 tracking-[0.25em]">WIN / LOSE</div>
+                  <div className="text-[10px] text-emerald-300/50 mt-2 tracking-[0.25em]">
+                    WIN / LOSE{s.draw > 0 ? " / DRAW" : ""}
+                  </div>
                 </div>
               </div>
             ))}
@@ -681,7 +687,7 @@ export default function TennisRanking() {
                   <span className={`flex-1 text-right truncate ${m.sa > m.sb ? "font-bold text-lime-400" : ""}`}>
                     {nameOf(m.a1)}・{nameOf(m.a2)}
                   </span>
-                  <span className="font-bold tabular-nums px-1.5 shrink-0 font-mono text-sm">{m.sa}-{m.sb}</span>
+                  <span className={`font-bold tabular-nums px-1.5 shrink-0 font-mono text-sm ${m.sa === m.sb ? "text-yellow-300/80" : ""}`}>{m.sa}-{m.sb}</span>
                   <span className={`flex-1 truncate ${m.sb > m.sa ? "font-bold text-lime-400" : ""}`}>
                     {nameOf(m.b1)}・{nameOf(m.b2)}
                   </span>

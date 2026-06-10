@@ -4,7 +4,7 @@ export function computeStandings(players, matches) {
   players.forEach((p) => {
     stats[p.id] = {
       id: p.id, name: p.name, age: p.age ?? null,
-      played: 0, win: 0, lose: 0, gamesFor: 0, gamesAgainst: 0,
+      played: 0, win: 0, lose: 0, draw: 0, gamesFor: 0, gamesAgainst: 0,
     };
   });
 
@@ -15,6 +15,7 @@ export function computeStandings(players, matches) {
     const sb = Number(m.sb);
     const aWin = sa > sb;
     const bWin = sb > sa;
+    const isDraw = sa === sb;
 
     teamA.forEach((id) => {
       if (stats[id] == null) return;
@@ -23,6 +24,7 @@ export function computeStandings(players, matches) {
       stats[id].gamesAgainst += sb;
       if (aWin) stats[id].win++;
       else if (bWin) stats[id].lose++;
+      else if (isDraw) stats[id].draw++;
     });
     teamB.forEach((id) => {
       if (stats[id] == null) return;
@@ -31,6 +33,7 @@ export function computeStandings(players, matches) {
       stats[id].gamesAgainst += sa;
       if (bWin) stats[id].win++;
       else if (aWin) stats[id].lose++;
+      else if (isDraw) stats[id].draw++;
     });
   });
 
@@ -42,6 +45,7 @@ export function computeStandings(players, matches) {
         // ゲーム率: 獲得ゲーム ÷ 全ゲーム（試合数に依存しない）
         gameRate: totalGames > 0 ? s.gamesFor / totalGames : 0,
         winRate: s.played > 0 ? s.win / s.played : 0,
+        drawRate: s.played > 0 ? s.draw / s.played : 0,
       };
     })
     .filter((s) => s.played > 0)
