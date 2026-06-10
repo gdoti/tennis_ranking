@@ -5,7 +5,7 @@ import {
   getSavedRoomCode, getSavedPassword, getSavedIsAdmin,
   saveRoomCode, savePassword, saveIsAdmin, clearRoomCode,
   generateRoomCode, createRoom, roomExists, verifyPassword,
-  subscribeRoom, updateRoom,
+  subscribeRoom, updateRoom, fetchRoomPlayers,
 } from "./lib/db";
 
 const todayStr = () => {
@@ -18,20 +18,59 @@ const todayStr = () => {
 // ────────────────────────────────────────────
 function RoomScreen({ onJoin }) {
   const [mode, setMode] = useState(null); // "create" | "join"
+  // create用
+  const [createPassword, setCreatePassword] = useState("");
+  const [masterCode, setMasterCode] = useState("");
+  const [masterPlayers, setMasterPlayers] = useState(null); // null=未取得, []=取得済み
+  const [selectedIds, setSelectedIds] = useState(new Set());
+  const [createStep, setCreateStep] = useState(1); // 1=パスワード入力, 2=マスター選択
+  // join用
   const [inputCode, setInputCode] = useState("");
   const [inputPassword, setInputPassword] = useState("");
-  const [createPassword, setCreatePassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleCreate = async () => {
+  const goToMasterStep = () => {
     const pass = createPassword.trim();
     if (!pass) { setError("パスワードを入力してください"); return; }
+    setError("");
+    setCreateStep(2);
+  };
+
+  const loadMasterPlayers = async () => {
+    const code = masterCode.trim().toUpperCase();
+    if (!code) { setError("マスタールームのコードを入力してください"); return; }
     setLoading(true);
     setError("");
+    const players = await fetchRoomPlayers(code);
+    setLoading(false);
+    if (players === null) { setError("ルームが見つかりません"); return; }
+    if (players.length === 0) { setError("このルームにメンバーが登録されていません"); return; }
+    setMasterPlayers(players);
+    setSelectedIds(new Set(players.map((p) => p.id)));
+  };
+
+  const toggleSelect = (id) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const handleCreate = async () => {
+    const pass = createPassword.trim();
+    setLoading(true);
+    setError("");
+    // マスターから選んだメンバーを初期プレイヤーとして使う
+    const initialPlayers = masterPlayers
+      ? masterPlayers
+          .filter((p) => selectedIds.has(p.id))
+          .map((p) => ({ id: Date.now() + Math.random(), name: p.name, age: p.age ?? null }))
+      : [];
     const code = generateRoomCode();
     await createRoom(code, {
-      players: [], matches: [],
+      players: initialPlayers, matches: [],
       circleName: "TENNIS CIRCLE",
       outputDate: todayStr(),
       password: pass,
@@ -59,17 +98,21 @@ function RoomScreen({ onJoin }) {
     onJoin(code, pass, false);
   };
 
+  const Logo = () => (
+    <div className="flex flex-col items-center gap-2">
+      <div className="w-4 h-4 rounded-full bg-lime-400 shadow-[0_0_16px_4px] shadow-lime-400/60 mb-1" />
+      <h1 className="text-3xl tracking-tight" style={{ fontFamily: "'Black Ops One', sans-serif" }}>
+        TENNIS CIRCLE
+      </h1>
+      <p className="text-emerald-300/60 text-xs font-mono tracking-widest uppercase">
+        doubles · score &amp; ranking
+      </p>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-emerald-950 text-emerald-50 flex flex-col items-center justify-center px-6 gap-8">
-      <div className="flex flex-col items-center gap-2">
-        <div className="w-4 h-4 rounded-full bg-lime-400 shadow-[0_0_16px_4px] shadow-lime-400/60 mb-1" />
-        <h1 className="text-3xl tracking-tight" style={{ fontFamily: "'Black Ops One', sans-serif" }}>
-          TENNIS CIRCLE
-        </h1>
-        <p className="text-emerald-300/60 text-xs font-mono tracking-widest uppercase">
-          doubles · score &amp; ranking
-        </p>
-      </div>
+      <Logo />
 
       {mode === null && (
         <div className="w-full max-w-xs flex flex-col gap-3">
@@ -88,7 +131,8 @@ function RoomScreen({ onJoin }) {
         </div>
       )}
 
-      {mode === "create" && (
+      {/* ── ルーム作成 ステップ1: パスワード設定 ── */}
+      {mode === "create" && createStep === 1 && (
         <div className="w-full max-w-xs flex flex-col gap-3">
           <p className="text-emerald-300/70 text-sm text-center">ルームのパスワードを設定してください</p>
           <input
@@ -96,7 +140,7 @@ function RoomScreen({ onJoin }) {
             type="password"
             value={createPassword}
             onChange={(e) => { setCreatePassword(e.target.value); setError(""); }}
-            onKeyDown={(e) => e.key === "Enter" && handleCreate()}
+            onKeyDown={(e) => e.key === "Enter" && goToMasterStep()}
             placeholder="パスワード"
             className="w-full bg-emerald-900 rounded-2xl px-4 py-4 text-base text-center border-2 border-emerald-600/70 focus:border-lime-400 outline-none"
           />
@@ -104,16 +148,87 @@ function RoomScreen({ onJoin }) {
             <p className="text-red-300 text-sm text-center bg-red-900/40 rounded-xl py-2 border border-red-500/40">{error}</p>
           )}
           <button
-            onClick={handleCreate}
-            disabled={loading}
-            className="w-full bg-lime-400 text-emerald-950 font-bold py-4 rounded-2xl text-base active:bg-lime-300 transition-colors disabled:opacity-50"
+            onClick={goToMasterStep}
+            className="w-full bg-lime-400 text-emerald-950 font-bold py-4 rounded-2xl text-base active:bg-lime-300 transition-colors"
           >
-            {loading ? "作成中..." : "ルームを作成"}
+            次へ →
           </button>
           <button onClick={() => { setMode(null); setError(""); }} className="text-emerald-400/60 text-sm text-center py-2">戻る</button>
         </div>
       )}
 
+      {/* ── ルーム作成 ステップ2: マスターメンバー選択 ── */}
+      {mode === "create" && createStep === 2 && (
+        <div className="w-full max-w-xs flex flex-col gap-3">
+          <p className="text-emerald-300/70 text-sm text-center font-bold">メンバーのインポート（任意）</p>
+          <p className="text-emerald-400/60 text-xs text-center">マスタールームのコードを入力するとメンバーを引き継げます</p>
+
+          {masterPlayers === null ? (
+            <>
+              <div className="flex gap-2">
+                <input
+                  value={masterCode}
+                  onChange={(e) => { setMasterCode(e.target.value.toUpperCase()); setError(""); }}
+                  onKeyDown={(e) => e.key === "Enter" && loadMasterPlayers()}
+                  placeholder="マスタールームのコード"
+                  maxLength={8}
+                  className="flex-1 bg-emerald-900 rounded-2xl px-4 py-3.5 text-base font-mono text-center border-2 border-emerald-600/70 focus:border-lime-400 outline-none tracking-widest"
+                />
+                <button
+                  onClick={loadMasterPlayers}
+                  disabled={loading}
+                  className="bg-emerald-600 text-white font-bold px-4 rounded-2xl text-sm active:bg-emerald-500 transition-colors disabled:opacity-50 border border-emerald-400/50"
+                >
+                  {loading ? "..." : "読込"}
+                </button>
+              </div>
+              {error && (
+                <p className="text-red-300 text-sm text-center bg-red-900/40 rounded-xl py-2 border border-red-500/40">{error}</p>
+              )}
+              <button
+                onClick={handleCreate}
+                disabled={loading}
+                className="w-full bg-lime-400 text-emerald-950 font-bold py-4 rounded-2xl text-base active:bg-lime-300 transition-colors disabled:opacity-50"
+              >
+                スキップしてルームを作成
+              </button>
+            </>
+          ) : (
+            <>
+              <p className="text-lime-400 text-xs text-center font-mono">{masterPlayers.length}名のメンバーが見つかりました</p>
+              <div className="bg-emerald-900/60 rounded-2xl border border-emerald-600/50 divide-y divide-emerald-700/50 max-h-56 overflow-y-auto">
+                {masterPlayers.map((p) => (
+                  <button
+                    key={p.id}
+                    onClick={() => toggleSelect(p.id)}
+                    className="w-full flex items-center gap-3 px-4 py-3 active:bg-emerald-800/50 transition-colors"
+                  >
+                    <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors ${selectedIds.has(p.id) ? "bg-lime-400 border-lime-400" : "border-emerald-500"}`}>
+                      {selectedIds.has(p.id) && <span className="text-emerald-950 text-xs font-bold leading-none">✓</span>}
+                    </div>
+                    <span className="flex-1 text-left font-bold text-base">{p.name}</span>
+                    {p.age != null && <span className="text-emerald-400/60 text-sm font-mono">{p.age}歳</span>}
+                  </button>
+                ))}
+              </div>
+              <p className="text-emerald-400/60 text-xs text-center">{selectedIds.size}名を選択中</p>
+              {error && (
+                <p className="text-red-300 text-sm text-center bg-red-900/40 rounded-xl py-2 border border-red-500/40">{error}</p>
+              )}
+              <button
+                onClick={handleCreate}
+                disabled={loading || selectedIds.size === 0}
+                className="w-full bg-lime-400 text-emerald-950 font-bold py-4 rounded-2xl text-base active:bg-lime-300 transition-colors disabled:opacity-50"
+              >
+                {loading ? "作成中..." : `${selectedIds.size}名でルームを作成`}
+              </button>
+            </>
+          )}
+          <button onClick={() => { setCreateStep(1); setMasterPlayers(null); setMasterCode(""); setError(""); }} className="text-emerald-400/60 text-sm text-center py-2">戻る</button>
+        </div>
+      )}
+
+      {/* ── 参加 ── */}
       {mode === "join" && (
         <div className="w-full max-w-xs flex flex-col gap-3">
           <input

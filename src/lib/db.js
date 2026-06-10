@@ -61,6 +61,12 @@ export async function verifyPassword(code, password) {
   return snap.data().password === password;
 }
 
+export async function fetchRoomPlayers(code) {
+  const snap = await getDoc(doc(db, "rooms", code));
+  if (!snap.exists()) return null;
+  return snap.data().players ?? [];
+}
+
 export function subscribeRoom(code, onData) {
   return onSnapshot(doc(db, "rooms", code), (snap) => {
     if (snap.exists()) onData(snap.data());
