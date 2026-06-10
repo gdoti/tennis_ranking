@@ -13,6 +13,35 @@ const todayStr = () => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 };
 
+// CSVテキストを解析してメンバー一覧を返す
+// 列Bが「会員名」の形式（1行目はヘッダー）を想定
+function parseMembersCsv(text) {
+  const lines = text.split(/\r?\n/).filter((l) => l.trim() !== "");
+  if (lines.length < 2) return [];
+  // カンマ区切り（引用符考慮）
+  const parseRow = (line) => {
+    const cols = [];
+    let cur = "";
+    let inQ = false;
+    for (const ch of line) {
+      if (ch === '"') { inQ = !inQ; }
+      else if (ch === "," && !inQ) { cols.push(cur.trim()); cur = ""; }
+      else cur += ch;
+    }
+    cols.push(cur.trim());
+    return cols;
+  };
+  const header = parseRow(lines[0]);
+  // 「会員名」列を探す（見つからなければ列B=index1を使う）
+  const nameIdx = header.findIndex((h) => h.includes("会員名") || h.includes("名前") || h.includes("氏名"));
+  const col = nameIdx >= 0 ? nameIdx : 1;
+  return lines.slice(1).map((line) => {
+    const cols = parseRow(line);
+    const name = (cols[col] ?? "").replace(/\s+/g, " ").trim();
+    return name;
+  }).filter((name) => name !== "");
+}
+
 // ────────────────────────────────────────────
 // ルーム選択画面
 // ────────────────────────────────────────────
@@ -24,6 +53,8 @@ function RoomScreen({ onJoin }) {
   const [masterPlayers, setMasterPlayers] = useState(null); // null=未取得, []=取得済み
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [createStep, setCreateStep] = useState(1); // 1=パスワード入力, 2=マスター選択
+  const [importMode, setImportMode] = useState("room"); // "room" | "csv"
+  const csvInputRef = useRef(null);
   // join用
   const [inputCode, setInputCode] = useState("");
   const [inputPassword, setInputPassword] = useState("");
@@ -47,6 +78,22 @@ function RoomScreen({ onJoin }) {
     saveMasterCode(code);
     setMasterPlayers(players);
     setSelectedIds(new Set(players.map((p) => p.id)));
+  };
+
+  const handleCsvFile = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const names = parseMembersCsv(ev.target.result);
+      if (names.length === 0) { setError("メンバーが見つかりませんでした。列Bに会員名があるか確認してください"); return; }
+      const players = names.map((name, i) => ({ id: i + 1, name, age: null }));
+      setMasterPlayers(players);
+      setSelectedIds(new Set(players.map((p) => p.id)));
+      setError("");
+    };
+    reader.readAsText(file, "UTF-8");
+    e.target.value = "";
   };
 
   const toggleSelect = (id) => {
@@ -161,52 +208,77 @@ function RoomScreen({ onJoin }) {
         </div>
       )}
 
-      {/* ── ルーム作成 ステップ2: マスターメンバー選択 ── */}
+      {/* ── ルーム作成 ステップ2: メンバーインポート ── */}
       {mode === "create" && createStep === 2 && (
         <div className="w-full max-w-xs flex flex-col gap-3">
           <p className="text-emerald-300/70 text-sm text-center font-bold">メンバーのインポート（任意）</p>
-          <p className="text-emerald-400/60 text-xs text-center">マスタールームのコードを入力するとメンバーを引き継げます</p>
 
-          {masterPlayers === null ? (
+          {/* インポート方法タブ */}
+          {masterPlayers === null && (
+            <div className="flex gap-1 bg-emerald-900/80 p-1 rounded-xl border border-emerald-700/60">
+              {[{ k: "room", label: "🏠 ルームコード" }, { k: "csv", label: "📄 CSV" }].map((t) => (
+                <button key={t.k} onClick={() => { setImportMode(t.k); setError(""); }}
+                  className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${importMode === t.k ? "bg-lime-400 text-emerald-950" : "text-emerald-300 active:bg-emerald-800/50"}`}>
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {masterPlayers === null && importMode === "room" && (
             <>
+              <p className="text-emerald-400/60 text-xs text-center">マスタールームのコードを入力してください</p>
               <div className="flex gap-2">
                 <input
                   value={masterCode}
                   onChange={(e) => { setMasterCode(e.target.value.toUpperCase()); setError(""); }}
                   onKeyDown={(e) => e.key === "Enter" && loadMasterPlayers()}
-                  placeholder="マスタールームのコード"
+                  placeholder="ルームコード"
                   maxLength={8}
                   className="flex-1 bg-emerald-900 rounded-2xl px-4 py-3.5 text-base font-mono text-center border-2 border-emerald-600/70 focus:border-lime-400 outline-none tracking-widest"
                 />
-                <button
-                  onClick={loadMasterPlayers}
-                  disabled={loading}
-                  className="bg-emerald-600 text-white font-bold px-4 rounded-2xl text-sm active:bg-emerald-500 transition-colors disabled:opacity-50 border border-emerald-400/50"
-                >
+                <button onClick={loadMasterPlayers} disabled={loading}
+                  className="bg-emerald-600 text-white font-bold px-4 rounded-2xl text-sm active:bg-emerald-500 transition-colors disabled:opacity-50 border border-emerald-400/50">
                   {loading ? "..." : "読込"}
                 </button>
               </div>
+            </>
+          )}
+
+          {masterPlayers === null && importMode === "csv" && (
+            <>
+              <p className="text-emerald-400/60 text-xs text-center">
+                Google スプレッドシートで<br />
+                <span className="text-emerald-300/80">ファイル → ダウンロード → CSV</span><br />
+                でエクスポートしたファイルを選択してください
+              </p>
+              <input ref={csvInputRef} type="file" accept=".csv,text/csv" onChange={handleCsvFile} className="hidden" />
+              <button onClick={() => csvInputRef.current?.click()}
+                className="w-full border-2 border-emerald-500 text-emerald-200 font-bold py-4 rounded-2xl text-base active:bg-emerald-800/50 transition-colors">
+                📂 CSVファイルを選択
+              </button>
+            </>
+          )}
+
+          {masterPlayers === null && (
+            <>
               {error && (
                 <p className="text-red-300 text-sm text-center bg-red-900/40 rounded-xl py-2 border border-red-500/40">{error}</p>
               )}
-              <button
-                onClick={handleCreate}
-                disabled={loading}
-                className="w-full bg-lime-400 text-emerald-950 font-bold py-4 rounded-2xl text-base active:bg-lime-300 transition-colors disabled:opacity-50"
-              >
+              <button onClick={handleCreate} disabled={loading}
+                className="w-full bg-lime-400 text-emerald-950 font-bold py-4 rounded-2xl text-base active:bg-lime-300 transition-colors disabled:opacity-50">
                 スキップしてルームを作成
               </button>
             </>
-          ) : (
+          )}
+
+          {masterPlayers !== null && (
             <>
               <p className="text-lime-400 text-xs text-center font-mono">{masterPlayers.length}名のメンバーが見つかりました</p>
               <div className="bg-emerald-900/60 rounded-2xl border border-emerald-600/50 divide-y divide-emerald-700/50 max-h-56 overflow-y-auto">
                 {masterPlayers.map((p) => (
-                  <button
-                    key={p.id}
-                    onClick={() => toggleSelect(p.id)}
-                    className="w-full flex items-center gap-3 px-4 py-3 active:bg-emerald-800/50 transition-colors"
-                  >
+                  <button key={p.id} onClick={() => toggleSelect(p.id)}
+                    className="w-full flex items-center gap-3 px-4 py-3 active:bg-emerald-800/50 transition-colors">
                     <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors ${selectedIds.has(p.id) ? "bg-lime-400 border-lime-400" : "border-emerald-500"}`}>
                       {selectedIds.has(p.id) && <span className="text-emerald-950 text-xs font-bold leading-none">✓</span>}
                     </div>
@@ -219,16 +291,16 @@ function RoomScreen({ onJoin }) {
               {error && (
                 <p className="text-red-300 text-sm text-center bg-red-900/40 rounded-xl py-2 border border-red-500/40">{error}</p>
               )}
-              <button
-                onClick={handleCreate}
-                disabled={loading || selectedIds.size === 0}
-                className="w-full bg-lime-400 text-emerald-950 font-bold py-4 rounded-2xl text-base active:bg-lime-300 transition-colors disabled:opacity-50"
-              >
+              <button onClick={handleCreate} disabled={loading || selectedIds.size === 0}
+                className="w-full bg-lime-400 text-emerald-950 font-bold py-4 rounded-2xl text-base active:bg-lime-300 transition-colors disabled:opacity-50">
                 {loading ? "作成中..." : `${selectedIds.size}名でルームを作成`}
               </button>
+              <button onClick={() => { setMasterPlayers(null); setError(""); }}
+                className="text-emerald-400/60 text-sm text-center py-1">← 別の方法で読み込む</button>
             </>
           )}
-          <button onClick={() => { setCreateStep(1); setMasterPlayers(null); setMasterCode(""); setError(""); }} className="text-emerald-400/60 text-sm text-center py-2">戻る</button>
+
+          <button onClick={() => { setCreateStep(1); setMasterPlayers(null); setError(""); }} className="text-emerald-400/60 text-sm text-center py-2">戻る</button>
         </div>
       )}
 
@@ -293,6 +365,7 @@ export default function TennisRanking() {
   const [imgUrl, setImgUrl] = useState(null);
   const [matchImgUrl, setMatchImgUrl] = useState(null);
   const [showRoomCode, setShowRoomCode] = useState(false);
+  const playerCsvInputRef = useRef(null);
 
   // Firestoreリアルタイム同期
   useEffect(() => {
@@ -361,6 +434,25 @@ export default function TennisRanking() {
   };
 
   const removeMatch = (id) => update({ matches: matches.filter((m) => m.id !== id) });
+
+  const importPlayersFromCsv = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const names = parseMembersCsv(ev.target.result);
+      if (names.length === 0) { setPlayerError("メンバーが見つかりませんでした。列Bに会員名があるか確認してください"); return; }
+      const existing = new Set(players.map((p) => p.name));
+      const newPlayers = names
+        .filter((name) => !existing.has(name))
+        .map((name) => ({ id: Date.now() + Math.random(), name, age: null }));
+      if (newPlayers.length === 0) { setPlayerError("CSVのメンバーは既に全員登録済みです"); return; }
+      update({ players: [...players, ...newPlayers] });
+      setPlayerError("");
+    };
+    reader.readAsText(file, "UTF-8");
+    e.target.value = "";
+  };
 
   const resetAll = () => {
     if (!window.confirm("メンバーと試合結果をすべて削除します。よろしいですか？")) return;
@@ -624,6 +716,12 @@ export default function TennisRanking() {
             {playerError && (
               <p className="text-red-200 text-xs bg-red-900/40 rounded-lg py-2 px-3 border border-red-500/40 mb-3">{playerError}</p>
             )}
+            {/* CSVインポート */}
+            <input ref={playerCsvInputRef} type="file" accept=".csv,text/csv" onChange={importPlayersFromCsv} className="hidden" />
+            <button onClick={() => playerCsvInputRef.current?.click()}
+              className="w-full mb-3 border border-emerald-500/60 text-emerald-300/80 py-2.5 rounded-xl text-sm font-bold active:bg-emerald-800/50 transition-colors flex items-center justify-center gap-2">
+              📄 CSVからメンバーを追加
+            </button>
             <p className="text-emerald-300/60 text-xs mb-4">登録メンバー {players.length}人</p>
             <div className="space-y-2">
               {players.map((p) => (
